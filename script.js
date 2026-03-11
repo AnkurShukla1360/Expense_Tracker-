@@ -1,86 +1,70 @@
-/* styles.css */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const expenseForm = document.getElementById("expense-form");
+  const expenseNameInput = document.getElementById("expense-name");
+  const expenseAmountInput = document.getElementById("expense-amount");
+  const expenseList = document.getElementById("expense-list");
+  const totalAmountDisplay = document.getElementById("total-amount");
 
-body {
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: #ffffff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+  let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+  let totalAmount = calculateTotal();
 
-.container {
-  width: 400px;
-  padding: 20px;
-  background-color: #1e1e1e;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
+  renderExpenses();
 
-h1,
-h2,
-h3 {
-  text-align: center;
-  margin-bottom: 20px;
-}
+  expenseForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = expenseNameInput.value.trim();
+    const amount = parseFloat(expenseAmountInput.value.trim());
 
-form {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
+    if (name !== "" && !isNaN(amount) && amount > 0) {
+      const newExpense = {
+        id: Date.now(),
+        name: name,
+        amount: amount,
+      };
+      expenses.push(newExpense);
+      saveExpensesTolocal();
+      renderExpenses();
+      updateTotal();
 
-input[type="text"],
-input[type="number"] {
-  width: 45%;
-  padding: 10px;
-  background-color: #333333;
-  border: none;
-  border-radius: 5px;
-  color: #fff;
-  outline: none;
-  margin: 3px;
-}
+      //clear input
+      expenseNameInput.value = "";
+      expenseAmountInput.value = "";
+    }
+  });
 
-button {
-  padding: 10px;
-  background-color: #6200ea;
-  border: none;
-  border-radius: 5px;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
+  function renderExpenses() {
+    expenseList.innerHTML = "";
+    expenses.forEach((expense) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${expense.name} - $${expense.amount}
+        <button data-id="${expense.id}">Delete</button>
+        `;
+      expenseList.appendChild(li);
+    });
+  }
 
-button:hover {
-  background-color: #3700b3;
-}
+  function calculateTotal() {
+    return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }
 
-#expense-list {
-  list-style-type: none;
-  padding: 0;
-}
+  function saveExpensesTolocal() {
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+  }
 
-#expense-list li {
-  background-color: #333333;
-  padding: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 5px;
-}
+  function updateTotal() {
+    totalAmount = calculateTotal();
+    totalAmountDisplay.textContent = totalAmount.toFixed(2);
+  }
 
-#total {
-  text-align: right;
-}
+  expenseList.addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+      const expenseId = parseInt(e.target.getAttribute("data-id"));
+      expenses = expenses.filter((expense) => expense.id !== expenseId);
 
-.hidden {
-  display: none;
-}
+      saveExpensesTolocal();
+      renderExpenses();
+      updateTotal();
+    }
+  });
+});
